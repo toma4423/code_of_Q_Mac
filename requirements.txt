@@ -1,0 +1,4 @@
+opencv-python-headless
+Pillow>=9.0.0
+qrcode[pil,svg]>=6.1
+svgwrite>=1.4.0

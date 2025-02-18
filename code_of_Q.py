@@ -247,6 +247,29 @@ class QRCodeScannerApp:
 if __name__ == "__main__":
     try:
         root = tk.Tk()
+
+        # MacOSの場合にウィンドウを最前面に表示するための設定（pyobjcが必要）
+        if sys.platform == "darwin":
+            try:
+                from AppKit import (
+                    NSApplication,
+                    NSApp,
+                    NSApplicationActivationPolicyRegular,
+                )
+
+                # ネイティブなアプリケーションとして扱うためにアクティベーションポリシーを設定
+                NSApp.setActivationPolicy_(NSApplicationActivationPolicyRegular)
+                # ウィンドウを前面に表示する処理
+                root.lift()
+                root.call("wm", "attributes", ".", "-topmost", "1")
+                root.after_idle(root.call, "wm", "attributes", ".", "-topmost", "0")
+            except ImportError:
+                # pyobjcがインストールされていない場合は警告を表示
+                print(
+                    "pyobjcがインストールされていません。MacOSでのウィンドウ最前面表示に影響します。",
+                    file=sys.stderr,
+                )
+
         app = QRCodeScannerApp(root)
         root.mainloop()
     except Exception as e:

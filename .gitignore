@@ -1,0 +1,17 @@
+# Pythonキャッシュファイル
+__pycache__/
+*.pyc
+*.pyo
+
+# 仮想環境ディレクトリ
+.venv/
+env/
+
+# ビルド・生成ファイル
+/dist/
+/build/
+/*.spec
+
+# OSやエディタ由来のファイル
+.DS_Store
+*.swp

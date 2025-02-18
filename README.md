@@ -23,6 +23,10 @@
 
 - Python 3.8以上
 - pip (Pythonパッケージマネージャー)
+- ※MacOSでより良いウィンドウ表示を実現するには、追加で **pyobjc** のインストールを推奨します  
+  ```bash
+  pip install pyobjc
+  ```
 
 ### セットアップ手順
 

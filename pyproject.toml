@@ -3,7 +3,7 @@ name = "suzu-qr"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "toma",email = "bs.kougyou@gmail.com"}
+    {name = "toma"}
 ]
 license = {text = "MIT"}
 readme = "README.md"

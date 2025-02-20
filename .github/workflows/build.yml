@@ -28,13 +28,23 @@ jobs:
       run: |
         pyinstaller --onefile --windowed --name "コードのQちゃん" \
           --add-data="Info.plist:." \
+          --target-arch arm64 \
+          --noconfirm \
+          --clean \
+          --distpath ./dist \
+          --workpath ./build \
           code_of_Q.py
+
+    - name: Create App Bundle
+      run: |
+        cd dist
+        zip -r "コードのQちゃん.app.zip" "コードのQちゃん.app"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: コードのQちゃん.app
-        path: dist/*
+        path: dist/コードのQちゃん.app.zip
 
     - name: Create Release
       uses: softprops/action-gh-release@v1

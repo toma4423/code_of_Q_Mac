@@ -1,5 +1,5 @@
 [project]
-name = "コードのQちゃん"
+name = "code-of-q"
 version = "0.1.0"
 description = "QRコードスキャナーとジェネレーター"
 authors = [

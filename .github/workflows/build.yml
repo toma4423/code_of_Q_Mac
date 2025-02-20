@@ -84,7 +84,8 @@ jobs:
         cd dist
         # アプリケーションバンドルの権限を修正
         chmod -R +x "コードのQちゃん.app"
-        xattr -cr "コードのQちゃん.app"
+        # 拡張属性をクリア
+        xattr -c "コードのQちゃん.app"
         # zipファイルを作成（-y オプションでシンボリックリンクを保持）
         zip -ry "コードのQちゃん.app.zip" "コードのQちゃん.app"
 

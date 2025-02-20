@@ -1,4 +1,15 @@
 import sys
+import os
+
+# PyQt6の依存関係を明示的に設定
+if getattr(sys, 'frozen', False):
+    # アプリケーションがバンドルされている場合のパス設定
+    bundle_dir = sys._MEIPASS
+else:
+    # 開発環境での実行時のパス設定
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+# その後、他のインポートを行う
 import cv2
 import atexit
 import io

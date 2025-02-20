@@ -37,6 +37,10 @@ jobs:
           --hidden-import PyQt6.QtCore \
           --hidden-import PyQt6.QtGui \
           --hidden-import PyQt6.QtWidgets \
+          --hidden-import cv2 \
+          --hidden-import PIL \
+          --hidden-import qrcode \
+          --add-data "Info.plist:." \
           code_of_Q.py
 
         # spec fileを編集
@@ -51,7 +55,7 @@ jobs:
         echo "             'NSCameraUsageDescription': 'QRコードの読み取りにカメラを使用します'," >> コードのQちゃん.spec
         echo "             'LSMinimumSystemVersion': '10.13.0'," >> コードのQちゃん.spec
         echo "         }," >> コードのQちゃん.spec
-        echo "         collect_all='PyQt6'," >> コードのQちゃん.spec
+        echo "         collect_all=['PyQt6', 'cv2', 'PIL', 'qrcode']," >> コードのQちゃん.spec
         echo "         )" >> コードのQちゃん.spec
 
         # ビルドを実行

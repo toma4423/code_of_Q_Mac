@@ -31,7 +31,7 @@ jobs:
           code_of_Q.py
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: コードのQちゃん.app
         path: dist/*
@@ -44,7 +44,18 @@ jobs:
         body_path: CHANGELOG.md
         name: "すごいぞコードのQちゃん！ v${{ github.ref_name }}"
         body: |
-          ## ダウンロード
-          - Mac版: コードのQちゃん.app
+          # すごいぞコードのQちゃん！ v${{ github.ref_name }}
+
+          ## ダウンロード方法
+          1. 下の「Assets」セクションから「コードのQちゃん.app」をダウンロード
+          2. ダウンロードしたファイルをApplicationsフォルダに移動
+          3. 初回起動時はControlキーを押しながらアプリをクリックして「開く」を選択
+
+          ## 注意事項
+          - macOS専用アプリケーションです
+          - 初回起動時にカメラへのアクセス許可を求められます
+
+          ## 更新内容
+          ${{ github.event.release.body }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

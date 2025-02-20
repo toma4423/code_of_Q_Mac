@@ -26,18 +26,28 @@ jobs:
     
     - name: Build with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name "コードのQちゃん" \
+        pyinstaller --onefile --windowed \
+          --name "コードのQちゃん" \
           --add-data="Info.plist:." \
+          --icon=code_of_Q.icns \
           --target-arch arm64 \
           --noconfirm \
           --clean \
           --distpath ./dist \
           --workpath ./build \
+          --osx-bundle-identifier "com.toma.codeofq" \
           code_of_Q.py
 
-    - name: Create App Bundle
+    - name: Fix App Bundle
       run: |
         cd dist
+        # アプリケーションバンドルの権限を修正
+        chmod +x "コードのQちゃん.app/Contents/MacOS/コードのQちゃん"
+        # Info.plistを正しい場所にコピー
+        cp ../Info.plist "コードのQちゃん.app/Contents/Info.plist"
+        # アイコンをコピー
+        cp ../code_of_Q.icns "コードのQちゃん.app/Contents/Resources/"
+        # zipファイルを作成
         zip -r "コードのQちゃん.app.zip" "コードのQちゃん.app"
 
     - name: Upload artifacts

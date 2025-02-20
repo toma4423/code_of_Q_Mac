@@ -7,19 +7,15 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-        python-version: ['3.11']
-
+    runs-on: macos-latest
+    
     steps:
     - uses: actions/checkout@v3
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
     
     - name: Install dependencies
       run: |
@@ -30,19 +26,14 @@ jobs:
     
     - name: Build with PyInstaller
       run: |
-        if [ "${{ matrix.os }}" = "macos-latest" ]; then
-          pyinstaller --onefile --windowed --icon=code_of_Q.ico --name suzu-qr \
-            --add-data="Info.plist:." \
-            code_of_Q.py
-        else
-          pyinstaller --onefile --windowed --icon=code_of_Q.ico --name suzu-qr \
-            code_of_Q.py
-        fi
+        pyinstaller --onefile --windowed --name "コードのQちゃん" \
+          --add-data="Info.plist:." \
+          code_of_Q.py
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: suzu-qr-${{ matrix.os }}
+        name: コードのQちゃん.app
         path: dist/*
 
     - name: Create Release
@@ -51,5 +42,9 @@ jobs:
       with:
         files: dist/*
         body_path: CHANGELOG.md
+        name: "すごいぞコードのQちゃん！ v${{ github.ref_name }}"
+        body: |
+          ## ダウンロード
+          - Mac版: コードのQちゃん.app
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

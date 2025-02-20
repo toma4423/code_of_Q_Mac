@@ -26,29 +26,37 @@ jobs:
     
     - name: Build with PyInstaller
       run: |
-        pyinstaller --onefile --windowed \
+        # まずspec fileを生成
+        pyi-makespec \
+          --windowed \
           --name "コードのQちゃん" \
-          --add-data="Info.plist:." \
           --icon=code_of_Q.icns \
           --target-arch arm64 \
-          --noconfirm \
-          --clean \
-          --distpath ./dist \
-          --workpath ./build \
           --osx-bundle-identifier "com.toma.codeofq" \
           code_of_Q.py
+
+        # spec fileを編集してInfo.plistを含める
+        echo "app = BUNDLE(exe," >> コードのQちゃん.spec
+        echo "         name='コードのQちゃん.app'," >> コードのQちゃん.spec
+        echo "         icon='code_of_Q.icns'," >> コードのQちゃん.spec
+        echo "         bundle_identifier='com.toma.codeofq'," >> コードのQちゃん.spec
+        echo "         info_plist={" >> コードのQちゃん.spec
+        echo "             'CFBundleShortVersionString': '1.0.0'," >> コードのQちゃん.spec
+        echo "             'CFBundleVersion': '1.0.0'," >> コードのQちゃん.spec
+        echo "             'NSHighResolutionCapable': 'True'," >> コードのQちゃん.spec
+        echo "             'NSCameraUsageDescription': 'QRコードの読み取りにカメラを使用します'," >> コードのQちゃん.spec
+        echo "         })" >> コードのQちゃん.spec
+
+        # ビルドを実行
+        pyinstaller --clean --noconfirm コードのQちゃん.spec
 
     - name: Fix App Bundle
       run: |
         cd dist
         # アプリケーションバンドルの権限を修正
-        chmod +x "コードのQちゃん.app/Contents/MacOS/コードのQちゃん"
-        # Info.plistを正しい場所にコピー
-        cp ../Info.plist "コードのQちゃん.app/Contents/Info.plist"
-        # アイコンをコピー
-        cp ../code_of_Q.icns "コードのQちゃん.app/Contents/Resources/"
-        # zipファイルを作成
-        zip -r "コードのQちゃん.app.zip" "コードのQちゃん.app"
+        chmod -R +x "コードのQちゃん.app"
+        # zipファイルを作成（-y オプションでシンボリックリンクを保持）
+        zip -ry "コードのQちゃん.app.zip" "コードのQちゃん.app"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

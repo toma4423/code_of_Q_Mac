@@ -1,17 +1,22 @@
-# Pythonキャッシュファイル
+# ビルド関連
+build/
+dist/
+*.spec
+
+# Python関連
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+.Python
+.env
+.venv
+venv/
 
-# 仮想環境ディレクトリ
-.venv/
-env/
-
-# ビルド・生成ファイル
-/dist/
-/build/
-/*.spec
-
-# OSやエディタ由来のファイル
+# macOS関連
 .DS_Store
-*.swp
+.AppleDouble
+.LSOverride
+
+# IDE関連
+.vscode/
+.idea/

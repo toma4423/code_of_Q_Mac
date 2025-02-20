@@ -33,9 +33,13 @@ jobs:
           --icon=code_of_Q.icns \
           --target-arch arm64 \
           --osx-bundle-identifier "com.toma.codeofq" \
+          --hidden-import PyQt6 \
+          --hidden-import PyQt6.QtCore \
+          --hidden-import PyQt6.QtGui \
+          --hidden-import PyQt6.QtWidgets \
           code_of_Q.py
 
-        # spec fileを編集してInfo.plistを含める
+        # spec fileを編集
         echo "app = BUNDLE(exe," >> コードのQちゃん.spec
         echo "         name='コードのQちゃん.app'," >> コードのQちゃん.spec
         echo "         icon='code_of_Q.icns'," >> コードのQちゃん.spec
@@ -45,7 +49,10 @@ jobs:
         echo "             'CFBundleVersion': '1.0.0'," >> コードのQちゃん.spec
         echo "             'NSHighResolutionCapable': 'True'," >> コードのQちゃん.spec
         echo "             'NSCameraUsageDescription': 'QRコードの読み取りにカメラを使用します'," >> コードのQちゃん.spec
-        echo "         })" >> コードのQちゃん.spec
+        echo "             'LSMinimumSystemVersion': '10.13.0'," >> コードのQちゃん.spec
+        echo "         }," >> コードのQちゃん.spec
+        echo "         collect_all='PyQt6'," >> コードのQちゃん.spec
+        echo "         )" >> コードのQちゃん.spec
 
         # ビルドを実行
         pyinstaller --clean --noconfirm コードのQちゃん.spec

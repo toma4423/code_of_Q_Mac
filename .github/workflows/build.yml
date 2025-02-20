@@ -39,8 +39,23 @@ jobs:
           --hidden-import PyQt6.QtWidgets \
           --hidden-import cv2 \
           --hidden-import PIL \
+          --hidden-import PIL._tkinter_finder \
+          --hidden-import PIL.Image \
           --hidden-import qrcode \
+          --hidden-import qrcode.image \
+          --hidden-import numpy \
+          --hidden-import numpy.core \
+          --collect-submodules PyQt6 \
+          --collect-submodules cv2 \
+          --collect-submodules PIL \
+          --collect-submodules qrcode \
+          --collect-data PyQt6 \
+          --collect-data cv2 \
+          --collect-data PIL \
+          --collect-data qrcode \
           --add-data "Info.plist:." \
+          --add-binary '/System/Library/Frameworks/Cocoa.framework/Cocoa:Frameworks' \
+          --add-binary '/System/Library/Frameworks/CoreVideo.framework/CoreVideo:Frameworks' \
           code_of_Q.py
 
         # spec fileを編集
@@ -54,8 +69,11 @@ jobs:
         echo "             'NSHighResolutionCapable': 'True'," >> コードのQちゃん.spec
         echo "             'NSCameraUsageDescription': 'QRコードの読み取りにカメラを使用します'," >> コードのQちゃん.spec
         echo "             'LSMinimumSystemVersion': '10.13.0'," >> コードのQちゃん.spec
+        echo "             'NSRequiresAquaSystemAppearance': 'No'," >> コードのQちゃん.spec
+        echo "             'NSMicrophoneUsageDescription': 'Not used'," >> コードのQちゃん.spec
         echo "         }," >> コードのQちゃん.spec
-        echo "         collect_all=['PyQt6', 'cv2', 'PIL', 'qrcode']," >> コードのQちゃん.spec
+        echo "         collect_all=['PyQt6', 'cv2', 'PIL', 'qrcode', 'numpy']," >> コードのQちゃん.spec
+        echo "         collect_binaries=['PyQt6', 'cv2']," >> コードのQちゃん.spec
         echo "         )" >> コードのQちゃん.spec
 
         # ビルドを実行
@@ -66,6 +84,7 @@ jobs:
         cd dist
         # アプリケーションバンドルの権限を修正
         chmod -R +x "コードのQちゃん.app"
+        xattr -cr "コードのQちゃん.app"
         # zipファイルを作成（-y オプションでシンボリックリンクを保持）
         zip -ry "コードのQちゃん.app.zip" "コードのQちゃん.app"
 

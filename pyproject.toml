@@ -14,6 +14,10 @@ dependencies = [
     "qrcode>=7.4.2",
     "pyobjc-framework-Cocoa>=9.0; sys_platform == 'darwin'",  # Mac用
     "PyQt6>=6.4.0",  # PySimpleGUIから変更
+    "PyQt6-Qt6>=6.4.0",
+    "PyQt6-sip>=13.4.0",
+    "numpy>=1.24.0",
+    "pyobjc-core>=9.0",
 ]
 
 

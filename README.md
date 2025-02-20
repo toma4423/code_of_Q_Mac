@@ -1,7 +1,7 @@
 # すごいぞコードのQちゃん！ (Amazing QR Code Reader)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![Python Version](https://img.shields.io/badge/python-3.11-blue)
 
 カメラを使用したリアルタイムQRコード読み取り、画像からのQRコード読み取り、およびカスタマイズ可能なQRコード生成機能を備えた多機能QRコードアプリケーションです。
 
@@ -14,19 +14,22 @@
 - ✨ カスタマイズ可能なQRコード生成
   - カラーカスタマイズ
   - SVG形式での保存
-- 🎨 直感的なGUIインターフェース
+- 🎨 直感的なGUIインターフェース（PyQt6使用）
 - 💾 生成したQRコードのSVG形式での保存
 
 ## インストール方法
 
-### 必要条件
+### 実行ファイルを使用する場合
 
-- Python 3.8以上
+1. [リリースページ](https://github.com/yourusername/amazing-qr-code-reader/releases)から最新版をダウンロード
+2. ダウンロードしたファイルを実行
+
+### ソースコードから実行する場合
+
+#### 必要条件
+
+- Python 3.11
 - pip (Pythonパッケージマネージャー)
-- ※MacOSでより良いウィンドウ表示を実現するには、追加で **pyobjc** のインストールを推奨します  
-  ```bash
-  pip install pyobjc
-  ```
 
 ### セットアップ手順
 
@@ -37,19 +40,17 @@ git clone https://github.com/yourusername/amazing-qr-code-reader.git
 cd amazing-qr-code-reader
 ```
 
-1. 仮想環境の作成（推奨）:
+2. Poetry環境のセットアップ:
 
 ```bash
-python3 -m venv qrenv
-source qrenv/bin/activate  # Linuxまたは macOS
-# または
-qrenv\Scripts\activate  # Windows
+curl -sSL https://install.python-poetry.org | python3 -
+poetry install
 ```
 
-1. 依存関係のインストール:
+3. アプリケーションの実行:
 
 ```bash
-pip install -r requirements.txt
+poetry run python code_of_Q.py
 ```
 
 ## 使用方法
@@ -115,10 +116,10 @@ pyinstaller --onefile --windowed code_of_Q.py
 ## 依存ライブラリ
 
 ```python
-opencv-python-headless>=4.8.0
-Pillow>=9.0.0
-qrcode[pil,svg]>=6.1
-svgwrite>=1.4.0
+opencv-python>=4.8.0
+pillow>=10.0.0
+qrcode>=7.4.2
+PyQt6>=6.4.0
 ```
 
 ## 貢献について
@@ -170,10 +171,10 @@ This project is released under the [MIT License](LICENSE).
 ## Dependencies
 
 ```python
-opencv-python-headless>=4.8.0
-Pillow>=9.0.0
-qrcode[pil,svg]>=6.1
-svgwrite>=1.4.0
+opencv-python>=4.8.0
+pillow>=10.0.0
+qrcode>=7.4.2
+PyQt6>=6.4.0
 ```
 
 ## Contributing

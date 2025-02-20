@@ -1,277 +1,279 @@
-import tkinter as tk
-from tkinter import messagebox, filedialog, colorchooser
+import sys
 import cv2
-from PIL import Image, ImageTk
+import atexit
+import io
+from PIL import Image
 import qrcode
 from qrcode.image.svg import SvgImage
-import sys
-import atexit
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout,
+    QWidget, QLabel, QTextEdit, QFileDialog, QColorDialog, QMessageBox
+)
+from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtGui import QImage, QPixmap
 
 
-class QRCodeScannerApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("すごいぞコードのQちゃん！")
-        self.root.geometry("700x600")
+class QRCodeScannerApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('すごいぞコードのQちゃん！')
+        self.setGeometry(100, 100, 700, 600)
 
         # カメラリソース初期化
         self.cap = None
         self.initialize_camera()
-
+        
         # 終了時のクリーンアップを登録
         atexit.register(self.cleanup_resources)
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-        # 以下は既存のUI初期化コード
-        self.setup_ui()
-
-        # カメラが利用可能な場合のみフレーム更新を開始
-        if self.cap is not None and self.cap.isOpened():
-            self.update_frame()
-        else:
-            self.show_camera_error()
-
-    def initialize_camera(self):
-        try:
-            self.cap = cv2.VideoCapture(0)
-            if not self.cap.isOpened():
-                raise ValueError("Failed to open camera")
-
-            # カメラの設定を最適化
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-            self.detector = cv2.QRCodeDetector()
-
-        except Exception as e:
-            self.cap = None
-            print(f"Camera initialization error: {str(e)}", file=sys.stderr)
-
-    def setup_ui(self):
-        # Button frame setup
-        button_frame = tk.Frame(self.root)
-        button_frame.pack(pady=10)
-
-        # Generate QR code button
-        self.generate_button = tk.Button(
-            button_frame, text="QRコードの作成", command=self.generate_qr_code
-        )
-        self.generate_button.grid(row=0, column=0, padx=10)
-
-        # Read QR code from image button
-        self.load_image_button = tk.Button(
-            button_frame,
-            text="画像からQRコードを読み取る",
-            command=self.read_qr_from_image,
-        )
-        self.load_image_button.grid(row=0, column=1, padx=10)
-
-        # Return to camera button
-        self.return_to_camera_button = tk.Button(
-            button_frame, text="カメラに戻る", command=self.return_to_camera
-        )
-        self.return_to_camera_button.grid(row=0, column=2, padx=10)
-        self.return_to_camera_button.grid_remove()
-
-        # Save SVG button
-        self.save_button = tk.Button(
-            button_frame, text="QRコードをSVGで保存", command=self.save_qr_code
-        )
-        self.save_button.grid(row=0, column=3, padx=10)
-        self.save_button.grid_remove()
-
-        # Color selection button
-        self.color_button = tk.Button(
-            button_frame, text="QRコードの色を選択", command=self.choose_color
-        )
-        self.color_button.grid(row=1, column=0, columnspan=2, pady=10)
-
-        # Result text area setup
-        self.setup_text_area()
-
-        # Canvas setup
-        self.canvas = tk.Canvas(self.root, width=480, height=360)
-        self.canvas.pack(pady=10)
-
-        # Initialize state variables
+        
+        # 状態変数の初期化
         self.show_qr_code = False
         self.qr_image = None
         self.svg_image = None
-        self.qr_fill_color = "black"
-        self.qr_back_color = "white"
+        self.qr_fill_color = 'black'
+        self.qr_back_color = 'white'
+        
+        # UIの設定
+        self.setup_ui()
+        
+        # カメラが利用可能な場合のみフレーム更新を開始
+        if self.cap is not None and self.cap.isOpened():
+            self.timer = QTimer()
+            self.timer.timeout.connect(self.update_frame)
+            self.timer.start(30)
+        else:
+            self.show_camera_error()
 
-    def setup_text_area(self):
-        self.result_label = tk.Label(self.root, text="スキャンまたは生成するテキスト:")
-        self.result_label.pack()
+    def setup_ui(self):
+        # メインウィジェットとレイアウト
+        main_widget = QWidget()
+        self.setCentralWidget(main_widget)
+        layout = QVBoxLayout()
+        
+        # ボタンレイアウト
+        button_layout = QHBoxLayout()
+        
+        # ボタンの作成
+        self.generate_button = QPushButton('QRコードの作成')
+        self.load_button = QPushButton('画像からQRコードを読み取る')
+        self.camera_button = QPushButton('カメラに戻る')
+        self.save_button = QPushButton('QRコードをSVGで保存')
+        self.color_button = QPushButton('QRコードの色を選択')
+        self.clear_button = QPushButton('クリア')
+        
+        # ボタンの初期状態設定
+        self.camera_button.hide()
+        self.save_button.hide()
+        
+        # ボタンのイベント接続
+        self.generate_button.clicked.connect(self.generate_qr_code)
+        self.load_button.clicked.connect(self.read_qr_from_image)
+        self.camera_button.clicked.connect(self.return_to_camera)
+        self.save_button.clicked.connect(self.save_qr_code)
+        self.color_button.clicked.connect(self.choose_color)
+        self.clear_button.clicked.connect(self.clear_text)
+        
+        # ボタンをレイアウトに追加
+        button_layout.addWidget(self.generate_button)
+        button_layout.addWidget(self.load_button)
+        button_layout.addWidget(self.camera_button)
+        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.color_button)
+        
+        # テキストエリアの設定
+        text_label = QLabel('スキャンまたは生成するテキスト:')
+        self.text_edit = QTextEdit()
+        self.text_edit.setFixedHeight(100)
+        
+        # 画像表示用ラベル
+        self.image_label = QLabel()
+        self.image_label.setFixedSize(480, 360)
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # レイアウトに要素を追加
+        layout.addLayout(button_layout)
+        layout.addWidget(text_label)
+        
+        text_layout = QHBoxLayout()
+        text_layout.addWidget(self.text_edit)
+        text_layout.addWidget(self.clear_button)
+        layout.addLayout(text_layout)
+        
+        layout.addWidget(self.image_label)
+        
+        main_widget.setLayout(layout)
 
-        text_frame = tk.Frame(self.root)
-        text_frame.pack(pady=10)
-
-        self.clear_button = tk.Button(
-            text_frame, text="クリア", command=self.clear_text
-        )
-        self.clear_button.pack(side=tk.LEFT, padx=5)
-
-        self.result_text = tk.Text(text_frame, height=4, width=50, wrap="word")
-        self.result_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
-        scroll_bar = tk.Scrollbar(text_frame, command=self.result_text.yview)
-        scroll_bar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.result_text.config(yscrollcommand=scroll_bar.set)
+    def initialize_camera(self):
+        try:
+            QMessageBox.information(
+                self,
+                'カメラアクセス',
+                'カメラへのアクセス許可が求められた場合は「許可」を選択してください。'
+            )
+            
+            # macOSでのカメラ初期化を最適化
+            if sys.platform == 'darwin':
+                self.cap = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)
+            else:
+                self.cap = cv2.VideoCapture(0)
+            
+            if not self.cap.isOpened():
+                raise ValueError("Failed to open camera")
+            
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            self.detector = cv2.QRCodeDetector()
+            
+        except Exception as e:
+            self.cap = None
+            QMessageBox.warning(
+                self,
+                'カメラエラー',
+                'カメラの初期化に失敗しました。\nシステム設定でカメラへのアクセスを許可してください。'
+            )
+            print(f"Camera initialization error: {str(e)}", file=sys.stderr)
 
     def show_camera_error(self):
-        self.canvas.create_text(
-            240,
-            180,
-            text="カメラを利用できません\n画像からQRコードを読み取るか\nQRコードを生成してください",
-            fill="red",
-            anchor="center",
-            justify="center",
+        self.image_label.setText(
+            "カメラを利用できません\n画像からQRコードを読み取るか\nQRコードを生成してください"
         )
 
-    def cleanup_resources(self):
-        if self.cap is not None and self.cap.isOpened():
-            self.cap.release()
-
-    def on_closing(self):
-        self.cleanup_resources()
-        self.root.destroy()
-
     def update_frame(self):
-        if not self.show_qr_code:
+        if not self.show_qr_code and self.cap is not None:
             ret, frame = self.cap.read()
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                img = Image.fromarray(frame)
-                imgtk = ImageTk.PhotoImage(image=img)
-                self.canvas.create_image(0, 0, anchor="nw", image=imgtk)
-                self.canvas.imgtk = imgtk
-
                 data, vertices, _ = self.detector.detectAndDecode(frame)
+                
                 if data:
-                    self.result_text.delete("1.0", tk.END)
-                    self.result_text.insert(tk.END, data)
-        self.root.after(30, self.update_frame)
+                    self.text_edit.setText(data)
+                
+                # フレームを表示用に変換
+                h, w, ch = frame.shape
+                bytes_per_line = ch * w
+                qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+                self.image_label.setPixmap(QPixmap.fromImage(qt_image))
 
     def generate_qr_code(self):
-        text = self.result_text.get("1.0", tk.END).strip()
+        text = self.text_edit.toPlainText().strip()
         if not text:
-            messagebox.showwarning(
-                "入力エラー", "テキストフィールドに文字を入力してください"
-            )
+            QMessageBox.warning(self, '入力エラー', 'テキストフィールドに文字を入力してください')
             return
 
         max_characters = 4000
         if len(text) > max_characters:
-            messagebox.showwarning(
-                "文字数エラー",
-                f"テキストが長すぎます。{max_characters}文字以内にしてください。",
+            QMessageBox.warning(
+                self,
+                '文字数エラー',
+                f'テキストが長すぎます。{max_characters}文字以内にしてください。'
             )
             return
 
         qr = qrcode.QRCode(
             error_correction=qrcode.constants.ERROR_CORRECT_L,
-            border=1,  # 余白を1に設定（デフォルトは4）
+            border=1,
         )
         qr.add_data(text)
         qr.make(fit=True)
 
         self.svg_image = qr.make_image(image_factory=SvgImage)
-
-        # 生成したQRコードの表示サイズを320x320に設定
         self.qr_image = qr.make_image(
-            fill=self.qr_fill_color, back_color=self.qr_back_color
+            fill=self.qr_fill_color,
+            back_color=self.qr_back_color
         ).resize((320, 320), Image.LANCZOS)
 
+        # QRコードを表示
+        img_byte_arr = io.BytesIO()
+        self.qr_image.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
+        
+        qt_image = QImage.fromData(img_byte_arr)
+        self.image_label.setPixmap(QPixmap.fromImage(qt_image))
+        
+        # ボタンの表示状態を更新
         self.show_qr_code = True
-        qr_imgtk = ImageTk.PhotoImage(self.qr_image)
-        self.canvas.create_image(0, 0, anchor="nw", image=qr_imgtk)
-        self.canvas.imgtk = qr_imgtk
-
-        self.return_to_camera_button.grid()
-        self.save_button.grid()
+        self.camera_button.show()
+        self.save_button.show()
 
     def choose_color(self):
-        fill_color = colorchooser.askcolor(title="QRコードの色を選択")[1]
-        back_color = colorchooser.askcolor(title="QRコードの背景色を選択")[1]
-        if fill_color and back_color:
-            self.qr_fill_color = fill_color
-            self.qr_back_color = back_color
+        fill_color = QColorDialog.getColor()
+        if fill_color.isValid():
+            back_color = QColorDialog.getColor()
+            if back_color.isValid():
+                self.qr_fill_color = fill_color.name()
+                self.qr_back_color = back_color.name()
 
     def read_qr_from_image(self):
-        file_path = filedialog.askopenfilename(
-            filetypes=[("画像ファイル", "*.png;*.jpg;*.jpeg;*.bmp")]
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            'QRコード画像を選択',
+            '',
+            'Images (*.png *.jpg *.jpeg *.bmp)'
         )
-        if file_path:
-            image = cv2.imread(file_path)
+        if filename:
+            image = cv2.imread(filename)
             if image is None:
-                messagebox.showerror(
-                    "読み込みエラー",
-                    "画像ファイルの読み込みに失敗しました。形式を確認してください。",
+                QMessageBox.critical(
+                    self,
+                    '読み込みエラー',
+                    '画像ファイルの読み込みに失敗しました。形式を確認してください。'
                 )
                 return
 
             data, vertices, _ = self.detector.detectAndDecode(image)
             if data:
-                self.result_text.delete("1.0", tk.END)
-                self.result_text.insert(tk.END, data)
-                messagebox.showinfo(
-                    "QRコード読み取り", "QRコードが正常に読み取られました"
+                self.text_edit.setText(data)
+                QMessageBox.information(
+                    self,
+                    'QRコード読み取り',
+                    'QRコードが正常に読み取られました'
                 )
             else:
-                messagebox.showwarning(
-                    "エラー", "QRコードが画像内に見つかりませんでした。"
+                QMessageBox.warning(
+                    self,
+                    'エラー',
+                    'QRコードが画像内に見つかりませんでした。'
                 )
 
     def save_qr_code(self):
         if self.svg_image is not None:
-            file_path = filedialog.asksaveasfilename(
-                defaultextension=".svg", filetypes=[("SVGファイル", "*.svg")]
+            filename, _ = QFileDialog.getSaveFileName(
+                self,
+                'SVGファイルとして保存',
+                '',
+                'SVG files (*.svg)'
             )
-            if file_path:
-                self.svg_image.save(file_path)
-                messagebox.showinfo("保存完了", "QRコードがSVG形式で保存されました")
-
-    def clear_text(self):
-        self.result_text.delete("1.0", tk.END)
+            if filename:
+                self.svg_image.save(filename)
+                QMessageBox.information(
+                    self,
+                    '保存完了',
+                    'QRコードがSVG形式で保存されました'
+                )
 
     def return_to_camera(self):
         self.show_qr_code = False
-        self.return_to_camera_button.grid_remove()
-        self.save_button.grid_remove()
+        self.camera_button.hide()
+        self.save_button.hide()
 
-    def __del__(self):
-        if hasattr(self, "cap") and self.cap.isOpened():
+    def clear_text(self):
+        self.text_edit.clear()
+
+    def cleanup_resources(self):
+        if self.cap is not None and self.cap.isOpened():
             self.cap.release()
+
+    def closeEvent(self, event):
+        self.cleanup_resources()
+        event.accept()
 
 
 if __name__ == "__main__":
     try:
-        root = tk.Tk()
-
-        # MacOSの場合にウィンドウを最前面に表示するための設定（pyobjcが必要）
-        if sys.platform == "darwin":
-            try:
-                from AppKit import (
-                    NSApplication,
-                    NSApp,
-                    NSApplicationActivationPolicyRegular,
-                )
-
-                # ネイティブなアプリケーションとして扱うためにアクティベーションポリシーを設定
-                NSApp.setActivationPolicy_(NSApplicationActivationPolicyRegular)
-                # ウィンドウを前面に表示する処理
-                root.lift()
-                root.call("wm", "attributes", ".", "-topmost", "1")
-                root.after_idle(root.call, "wm", "attributes", ".", "-topmost", "0")
-            except ImportError:
-                # pyobjcがインストールされていない場合は警告を表示
-                print(
-                    "pyobjcがインストールされていません。MacOSでのウィンドウ最前面表示に影響します。",
-                    file=sys.stderr,
-                )
-
-        app = QRCodeScannerApp(root)
-        root.mainloop()
+        app = QApplication(sys.argv)
+        window = QRCodeScannerApp()
+        window.show()
+        sys.exit(app.exec())
     except Exception as e:
         print(f"Application error: {str(e)}", file=sys.stderr)
         sys.exit(1)

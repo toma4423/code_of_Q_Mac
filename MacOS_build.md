@@ -1,133 +1,110 @@
-# MacOSでQRコードアプリケーションを実行ファイル化する方法
+# MacOS用アプリケーションのビルド手順
 
-## 1. 開発環境の準備
-
-### Python環境の確認
-
-まず、Python 3.8以上がインストールされていることを確認します：
-
+## 0. 初期セットアップ（初回のみ）
 ```bash
-python3 --version
+# リポジトリのクローン
+git clone [repository-url]
+cd [repository-name]
+
+# Poetry環境のセットアップ
+poetry install
 ```
 
-### 仮想環境の作成（推奨）
-
-新しい仮想環境を作成して有効化します：
+## 1. 環境準備
 
 ```bash
-python3 -m venv qrenv
-source qrenv/bin/activate
+# Poetry環境に入る
+poetry shell
+
+# PyInstallerをインストール
+poetry add --group dev pyinstaller
 ```
 
-## 2. 依存関係のインストール
+## 2. Info.plistの準備
 
-### 既存の依存関係をクリーンアップ
+`Info.plist`ファイルに以下の内容を設定：
 
-```bash
-pip uninstall -r requirements.txt
-pip uninstall tk opencv-python Pillow qrcode svgwrite
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>コードのQちゃん</string>
+    <key>CFBundleExecutable</key>
+    <string>コードのQちゃん</string>
+    <key>CFBundleIconFile</key>
+    <string>code_of_Q.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.toma.codeofq</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.13.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>QRコードの読み取りにカメラを使用します</string>
+</dict>
+</plist>
 ```
 
-### 新しい依存関係をインストール
-
-requirements.txtの内容が更新されていることを確認し、インストールを実行：
+## 3. アプリケーションのビルド
 
 ```bash
-pip install -r requirements.txt
-```
+# 既存のビルドファイルを削除
+rm -rf build dist *.spec
 
-### PyInstallerのインストール
-
-```bash
-pip install --upgrade pyinstaller
-```
-
-## 3. 実行ファイルの生成
-
-### PyInstallerの実行
-
-以下のコマンドを1行で実行します：
-
-```bash
-pyinstaller --onefile --windowed \
+# PyInstallerでビルド
+pyinstaller \
+  --windowed \
+  --name "コードのQちゃん" \
+  --icon=code_of_Q.icns \
+  --add-binary="Info.plist:." \
+  --target-arch arm64 \
+  --noconfirm \
+  --clean \
+  --hidden-import=PyQt6 \
+  --hidden-import=PyQt6.QtCore \
+  --hidden-import=PyQt6.QtGui \
+  --hidden-import=PyQt6.QtWidgets \
   --hidden-import=PIL._tkinter_finder \
   --hidden-import=qrcode.image.svg \
   --hidden-import=svgwrite \
-  --add-binary='/System/Library/Frameworks/Tk.framework/Tk:tk' \
-  --add-binary='/System/Library/Frameworks/Tcl.framework/Tcl:tcl' \
   code_of_Q.py
+
+# Info.plistを正しい場所にコピー
+cp Info.plist dist/コードのQちゃん.app/Contents/
 ```
 
-## 4. アプリケーションの確認
-
-### 生成されたファイルの確認
-
-`dist`フォルダ内に生成された実行ファイルを確認します。
-
-### 動作テスト
-
-以下の機能が正常に動作することを確認します：
-
-- カメラ映像の表示
-- QRコードの読み取り
-- QRコードの生成
-- SVGファイルの保存
-
-## 5. トラブルシューティング
-
-### カメラアクセスの問題
-
-MacOSでカメラが認識されない場合：
-
-1. システム環境設定 > セキュリティとプライバシー を開く
-2. カメラ のタブを選択
-3. アプリケーションのカメラアクセスを許可
-
-### 依存関係の問題
-
-もし実行時にライブラリ関連のエラーが発生する場合：
-
-1. .specファイルを確認
-
-```python
-# code_of_Q.spec
-a = Analysis(
-    ['code_of_Q.py'],
-    pathex=[],
-    binaries=[],
-    datas=[],
-    hiddenimports=['PIL._tkinter_finder', 'qrcode.image.svg', 'svgwrite'],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    noarchive=False,
-)
-```
-
-2.specファイルを使用してビルド
+## 4. 配布用パッケージの作成
 
 ```bash
-pyinstaller code_of_Q.spec
+# READMEをdistディレクトリにコピー
+cp README.md dist/
+
+# distディレクトリに移動
+cd dist
+
+# 配布用zipファイルの作成
+zip -r コードのQちゃん_v1.0.0.zip コードのQちゃん.app README.md
 ```
 
-### その他の注意点
+## 注意事項
 
-- アプリケーションの初回起動時はセキュリティの警告が表示される場合があります
-- 開発環境とターゲット環境のPythonバージョンは揃えることを推奨します
-- カメラ機能が動作しない場合は、別のカメラデバイスを試すことも検討してください
+- ビルド時にはPoetry環境内で作業すること
+- バージョン番号は`Info.plist`と`pyproject.toml`で一致させること
+- アイコンファイル（.icns）が正しく配置されていることを確認
+- ビルド後は必ずアプリケーションの動作確認を行うこと
 
-## 6. デプロイメント
+## トラブルシューティング
 
-### アプリケーションの配布
+1. カメラアクセスエラーが発生する場合：
+   - Info.plistが正しい場所にあることを確認
+   - NSCameraUsageDescriptionが設定されていることを確認
 
-生成された実行ファイルを配布する際は、以下の点に注意してください：
-
-- 実行権限の確認
-- セキュリティ設定の説明
-- 必要なシステム要件の明記
-
----
-注: この手順書はMacOS向けです。他のOSでは異なる手順が必要になる場合があります。
+2. アイコンが表示されない場合：
+   - .icnsファイルのパスを確認
+   - Info.plistのCFBundleIconFile設定を確認

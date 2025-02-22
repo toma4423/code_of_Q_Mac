@@ -1,7 +1,7 @@
 [project]
 name = "code-of-q"
 version = "0.1.1"
-description = "QRコードスキャナーとジェネレーター"
+description = "QRコード読み取り・生成アプリケーション"
 authors = [
     {name = "toma"}
 ]
@@ -11,19 +11,23 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
     "opencv-python>=4.8.0",
     "pillow>=10.0.0",
-    "qrcode>=7.4.2",
+    "qrcode>=8.0.0",
     "PyQt6>=6.4.0",
 ]
 
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 qr = "code_of_Q:main"
 
 [tool.poetry]
+name = "code-of-q"
+version = "0.1.1"
+description = "QRコード読み取り・生成アプリケーション"
+authors = ["Your Name <your.email@example.com>"]
 packages = [
     { include = "code_of_Q.py" }
 ]
@@ -32,4 +36,4 @@ include = [
 ]
 
 [tool.poetry.group.dev.dependencies]
-pyinstaller = "^6.12.0"
+pyinstaller = "^6.3.0"

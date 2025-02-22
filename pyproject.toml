@@ -1,6 +1,6 @@
 [project]
 name = "code-of-q"
-version = "0.1.0"
+version = "0.1.1"
 description = "QRコードスキャナーとジェネレーター"
 authors = [
     {name = "toma"}
@@ -30,9 +30,6 @@ packages = [
 include = [
     { path = "Info.plist" }
 ]
-
-[tool]
-package-mode = false
 
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.12.0"

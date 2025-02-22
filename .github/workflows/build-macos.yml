@@ -1,0 +1,75 @@
+name: Build MacOS App
+
+on:
+  push:
+    tags:
+      - 'v*'  # バージョンタグがプッシュされたときに実行
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+    
+    - name: Install dependencies
+      run: |
+        poetry install
+    
+    - name: Build with PyInstaller
+      run: |
+        poetry run pyinstaller \
+          --windowed \
+          --name "コードのQちゃん" \
+          --icon=code_of_Q.icns \
+          --add-binary="Info.plist:." \
+          --target-arch arm64 \
+          --noconfirm \
+          --clean \
+          code_of_Q.py
+    
+    - name: Remove extended attributes
+      run: |
+        xattr -cr dist/
+    
+    - name: Create tar.gz archive
+      run: |
+        tar -czf コードのQちゃん.tar.gz dist/
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          コードのQちゃん.tar.gz
+        body: |
+          ## MacOSユーザーの方へ
+          
+          ダウンロード後、以下の手順で実行してください：
+          
+          ```bash
+          # ターミナルを開き、ダウンロードしたファイルのディレクトリに移動
+          cd ~/Downloads
+          
+          # 拡張属性を削除
+          xattr -cr コードのQちゃん.tar.gz
+          
+          # ファイルを解凍
+          tar -xzf コードのQちゃん.tar.gz
+          
+          # アプリケーションの拡張属性も削除
+          xattr -cr dist/コードのQちゃん.app
+          ```
+          
+          詳しいインストール手順は[インストールガイド](./MacOS_memo/MacOS_Installation_Guide.md)をご覧ください。
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
